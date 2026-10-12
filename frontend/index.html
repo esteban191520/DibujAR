@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DibujAR</title>
+<style>
+:root{--bg:#0f0b1e;--card:#1b1535;--card2:#241b48;--txt:#f3f0ff;--sub:#a79fcf;--ac:linear-gradient(135deg,#ff5ca8,#7c5cff);--ac2:#7c5cff;--danger:#ff6b8a}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,sans-serif;background:radial-gradient(circle at 20% 0,#2a1b5c,var(--bg) 55%) fixed;color:var(--txt);min-height:100vh}
+h1,h2,h3{margin:.2em 0}
+.logo{font-size:2.2rem;font-weight:800;background:var(--ac);-webkit-background-clip:text;background-clip:text;color:transparent}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:.65rem .8rem;margin:.3rem 0;border-radius:10px;border:1px solid #3a2f6b;background:#120d28}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer;opacity:.7}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
+button{cursor:pointer;border:0;border-radius:10px;padding:.6rem 1rem;background:#2a2150}
+.btn{background:var(--ac);font-weight:600}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn-danger:hover{background:#ff6b8a22}
+.link{background:none;color:var(--sub);text-decoration:underline}
+#auth{max-width:440px;margin:6vh auto;padding:1.5rem;background:var(--card);border-radius:18px;box-shadow:0 10px 40px #0008}
+.tabs{display:flex;gap:.5rem;margin:1rem 0}.tabs button{flex:1}.tabs .on{background:var(--ac)}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0 .8rem}.chips button{padding:.3rem .7rem;border-radius:99px;font-size:.85rem}.chips .on{background:var(--ac)}
+label{font-size:.85rem;color:var(--sub)}
+#app main{max-width:620px;margin:0 auto;padding:1rem 1rem 6rem}
+#nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:.2rem;padding:.5rem;background:#120d28ee;backdrop-filter:blur(8px);border-top:1px solid #3a2f6b;z-index:5}
+#nav button{background:none;flex:1;max-width:100px;font-size:.78rem;color:var(--sub);padding:.5rem .2rem}
+#nav button.on{color:#fff;background:#2a2150}#nav button.pronto{opacity:.45}
+.post{background:var(--card);border-radius:16px;margin:1rem 0;overflow:hidden}
+.post header{display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem}
+.post header small{color:var(--sub)}
+.post img,.post video{width:100%;display:block;max-height:75vh;object-fit:contain;background:#000}
+.acc{display:flex;gap:.6rem;padding:.6rem 1rem 0}.acc button.on{background:var(--ac)}
+.desc{padding:.4rem 1rem 1rem;margin:0}.tags{color:#ff8fc4}
+.coms{padding:0 1rem 1rem}.com{padding:.3rem 0;border-bottom:1px solid #2d2459;font-size:.92rem}
+.com button{float:right;background:none;color:var(--sub);padding:0}
+.row{display:flex;gap:.5rem}
+#explorar{height:calc(100vh - 6.5rem);overflow-y:scroll;scroll-snap-type:y mandatory;border-radius:16px}
+#explorar .post{height:100%;margin:0;scroll-snap-align:start;border-radius:0;display:flex;flex-direction:column}
+#explorar .post img,#explorar .post video{flex:1;min-height:0;max-height:none}
+.vacio{color:var(--sub);text-align:center;padding:3rem 1rem}
+#toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:#ff4d6d;padding:.6rem 1.2rem;border-radius:10px;z-index:99;display:none;color:#fff}
+#toast.ok{background:#3ac97a}
+
+/* ---------- PERFIL ESTILO INSTAGRAM ---------- */
+.perfil{padding:.5rem 0 1rem}
+.perfil-top{display:flex;gap:1.2rem;align-items:flex-start;padding:.5rem 0 1rem}
+.perfil-foto{width:90px;height:90px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:2.4rem;cursor:pointer;transition:transform .25s;position:relative}
+.perfil-foto:hover{transform:scale(1.05)}
+.perfil-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.perfil-foto span{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.perfil-info{flex:1;min-width:0}
+.perfil-nombre{font-size:1.15rem;font-weight:700;margin:0;word-break:break-word}
+.perfil-user{color:var(--sub);font-size:.9rem;margin:.15rem 0 .5rem}
+.perfil-acciones{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem}
+.perfil-acciones button{font-size:.85rem;padding:.45rem .9rem}
+.perfil-stats{display:flex;gap:1.4rem;padding:.8rem 0;border-top:1px solid #2d2459;border-bottom:1px solid #2d2459;margin:.5rem 0}
+.perfil-stat{text-align:center}
+.perfil-stat b{display:block;font-size:1.15rem}
+.perfil-stat span{font-size:.8rem;color:var(--sub)}
+.perfil-bio{margin:.5rem 0;font-size:.92rem;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.perfil-bio .vacia{color:var(--sub);font-style:italic}
+.perfil-meta{font-size:.85rem;color:var(--sub);display:flex;flex-wrap:wrap;gap:.8rem;margin:.4rem 0}
+.perfil-meta span{display:inline-flex;align-items:center;gap:.25rem}
+.perfil-grupo{margin:.6rem 0}
+.perfil-grupo h4{font-size:.78rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:.3rem 0 .4rem}
+.perfil-chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.perfil-chip{background:#2a2150;border-radius:99px;padding:.25rem .7rem;font-size:.8rem;border:1px solid #3a2f6b}
+.perfil-chip.vacio{opacity:.6;font-style:italic}
+
+/* Pestañas */
+.perfil-tabs{display:flex;border-top:1px solid #2d2459;margin-top:1rem}
+.perfil-tabs button{flex:1;background:none;color:var(--sub);padding:.8rem .4rem;border-radius:0;font-size:.85rem;display:flex;flex-direction:column;align-items:center;gap:.15rem;border-bottom:2px solid transparent}
+.perfil-tabs button.on{color:#fff;border-bottom-color:var(--ac2)}
+.perfil-tabs button .em{font-size:1.3rem}
+
+/* Grid */
+.perfil-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.3rem;padding-top:.6rem}
+.perfil-grid .cell{position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;background:#221a44;cursor:pointer}
+.perfil-grid .cell img,.perfil-grid .cell video{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.perfil-grid .cell:hover img,.perfil-grid .cell:hover video{transform:scale(1.08)}
+.perfil-grid .cell .ov{position:absolute;inset:0;background:#000a;color:#fff;display:flex;align-items:center;justify-content:center;gap:.7rem;font-size:.85rem;opacity:0;transition:opacity .25s}
+.perfil-grid .cell:hover .ov{opacity:1}
+.perfil-grid .cell .ov b{font-weight:600}
+.perfil-grid .vacio-grid{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--sub)}
+
+/* Modales */
+.modal-bg{position:fixed;inset:0;background:#000a;backdrop-filter:blur(4px);z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.modal{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:1.2rem 1.3rem 1.5rem;max-height:92vh;overflow-y:auto;box-shadow:0 -10px 40px #000a}
+.modal h3{display:flex;justify-content:space-between;align-items:center;margin:0 0 1rem}
+.modal h3 button{background:none;color:var(--sub);font-size:1.3rem;padding:.2rem .5rem}
+.modal label{display:block;margin-top:.7rem}
+.modal textarea{resize:vertical;min-height:70px;font-family:inherit}
+.contador{font-size:.75rem;color:var(--sub);text-align:right;margin-top:-.2rem}
+.modal-acciones{display:flex;gap:.5rem;margin-top:1.2rem}
+.modal-acciones button{flex:1}
+.avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin:.8rem 0}
+.avatar-grid button{aspect-ratio:1;font-size:2rem;background:#241b48;border:2px solid transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .2s,border-color .2s}
+.avatar-grid button:hover{transform:scale(1.08);border-color:var(--ac2)}
+.avatar-grande{width:100px;height:100px;border-radius:50%;overflow:hidden;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:2.6rem;margin:0 auto .8rem;position:relative}
+.avatar-grande img{width:100%;height:100%;object-fit:cover}
+.avatar-grande span{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+
+/* Input @usuario */
+.user-wrap{position:relative}
+.user-wrap .prefix{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--sub);pointer-events:none;font-weight:600}
+.user-wrap input{padding-left:1.9rem;margin:.3rem 0}
+.user-estado{font-size:.8rem;margin:-.1rem 0 .4rem;min-height:1.1em}
+.user-estado.ok{color:#3ac97a}
+.user-estado.err{color:#ff6b8a}
+.user-estado.warn{color:#ffb45c}
+.sugerencias{display:flex;flex-direction:column;gap:.35rem;margin:.4rem 0 .2rem}
+.sugerencia{display:flex;justify-content:space-between;align-items:center;background:#241b48;padding:.5rem .8rem;border-radius:10px;font-size:.9rem;border:1px solid #3a2f6b;transition:background .2s,border-color .2s}
+.sugerencia:hover{background:#2f2464;border-color:var(--ac2)}
+.sugerencia button{font-size:.78rem;padding:.25rem .7rem;background:var(--ac);color:#fff;border-radius:99px}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<section id="auth">
+  <div class="logo">DibujAR</div>
+  <p style="color:var(--sub);margin:0">La red social para quienes dibujan</p>
+  <div class="tabs"><button id="tLogin" class="on">Iniciar sesión</button><button id="tReg">Crear cuenta</button></div>
+  <div id="fLogin">
+    <input id="lCorreo" type="email" placeholder="Correo">
+    <input id="lPass" type="password" placeholder="Contraseña">
+    <button class="btn" id="bLogin" style="width:100%;margin-top:.5rem">Entrar</button>
+  </div>
+  <div id="fReg" hidden>
+    <div class="row"><input id="rNombre" placeholder="Nombre"><input id="rApellido" placeholder="Apellido"></div>
+
+    <label>Nombre de usuario</label>
+    <div class="user-wrap">
+      <span class="prefix">@</span>
+      <input id="rUser" placeholder="tunombre" autocomplete="off" spellcheck="false">
+    </div>
+    <div id="rUserEstado" class="user-estado"></div>
+    <div id="rUserSug" class="sugerencias"></div>
+
+    <input id="rCorreo" type="email" placeholder="Correo">
+    <input id="rPass" type="password" placeholder="Contraseña (mínimo 6)">
+    <input id="rPais" placeholder="País">
+    <label>Fecha de nacimiento</label><input id="rFecha" type="date" min="1900-01-01" max="2026-12-31">
+    <label>¿Con qué frecuencia dibujas?</label><select id="rFrec"></select>
+    <label>Estilos favoritos</label><div class="chips" id="rEstilos"></div>
+    <label>Temáticas favoritas</label><div class="chips" id="rTemas"></div>
+    <button class="btn" id="bReg" style="width:100%">Crear cuenta</button>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <main id="vista"></main>
+  <nav id="nav"></nav>
+</div>
+
+<div id="modales"></div>
+
+<script src="/vendor/anime.umd.min.js"></script>
+<script src="/vendor/motion.js"></script>
+<script>
+const A = anime.animate, stagger = anime.stagger, M = Motion.animate;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => r.querySelectorAll(s);
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let yo = null, vistaActual = "inicio";
+let debounceUser = null;
+
+function toast(msg, ok = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = ok ? "ok" : "";
+  t.style.display = "block";
+  setTimeout(() => t.style.display = "none", 3000);
+}
+
+async function api(ruta, opciones = {}) {
+  const h = opciones.headers || {};
+  const tk = localStorage.getItem("dibujar_token");
+  if (tk) h.Authorization = "Bearer " + tk;
+  const r = await fetch(ruta, { ...opciones, headers: h });
+  if (r.status === 401 && tk) { salir(); throw new Error("Sesión vencida"); }
+  const datos = r.status === 204 ? null : await r.json().catch(() => null);
+  if (!r.ok) throw new Error((datos && datos.detail) || "Error " + r.status);
+  return datos;
+}
+const jsonPost = (ruta, cuerpo, metodo = "POST") =>
+  api(ruta, { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+
+/* ---------- Auth ---------- */
+function mostrarTab(reg) {
+  $("#fLogin").hidden = reg; $("#fReg").hidden = !reg;
+  $("#tLogin").classList.toggle("on", !reg); $("#tReg").classList.toggle("on", reg);
+}
+$("#tLogin").onclick = () => mostrarTab(false);
+$("#tReg").onclick = () => mostrarTab(true);
+
+function chips(cont, lista) {
+  cont.innerHTML = lista.map(x => `<button type="button" data-id="${x.id}">${esc(x.nombre)}</button>`).join("");
+  cont.onclick = e => { if (e.target.dataset.id) e.target.classList.toggle("on"); };
+}
+const elegidos = c => [...c.querySelectorAll(".on")].map(b => +b.dataset.id);
+
+async function cargarCatalogos() {
+  const [f, e, t] = await Promise.all([api("/frecuencias"), api("/estilos"), api("/tematicas")]);
+  $("#rFrec").innerHTML = '<option value="">Elige una opción</option>' +
+    f.map(x => `<option value="${x.id_frecuencia}">${esc(x.nombre)}</option>`).join("");
+  chips($("#rEstilos"), e.map(x => ({ id: x.id_estilo, nombre: x.nombre })));
+  chips($("#rTemas"), t.map(x => ({ id: x.id_tematica, nombre: x.nombre })));
+}
+
+/* ---------- Validación de @usuario ---------- */
+const inputUser = $("#rUser");
+const estadoUser = $("#rUserEstado");
+const sugUser = $("#rUserSug");
+let userValido = false;
+
+function limpiarUsuario(v) {
+  return (v || "").toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 30);
+}
+
+inputUser.addEventListener("input", () => {
+  let v = limpiarUsuario(inputUser.value);
+  if (inputUser.value !== v) inputUser.value = v;
+
+  clearTimeout(debounceUser);
+  if (!v) {
+    estadoUser.textContent = "";
+    estadoUser.className = "user-estado";
+    sugUser.innerHTML = "";
+    userValido = false;
+    return;
+  }
+  if (v.length < 3) {
+    estadoUser.textContent = "⚠️ Mínimo 3 caracteres";
+    estadoUser.className = "user-estado warn";
+    sugUser.innerHTML = "";
+    userValido = false;
+    return;
+  }
+  estadoUser.textContent = "⏳ Verificando...";
+  estadoUser.className = "user-estado";
+  debounceUser = setTimeout(async () => {
+    try {
+      const r = await api("/usuarios/disponible/" + encodeURIComponent(v));
+      if (r.disponible) {
+        estadoUser.textContent = "✅ Disponible";
+        estadoUser.className = "user-estado ok";
+        sugUser.innerHTML = "";
+        userValido = true;
+      } else {
+        estadoUser.textContent = "❌ " + (r.error || "No disponible");
+        estadoUser.className = "user-estado err";
+        userValido = false;
+        if (r.sugerencias && r.sugerencias.length) {
+          sugUser.innerHTML = "<div style='font-size:.78rem;color:var(--sub);margin-bottom:.3rem'>Prueba con:</div>" +
+            r.sugerencias.map(s => `<div class="sugerencia"><span>@${esc(s)}</span><button type="button" data-usar="${esc(s)}">Usar</button></div>`).join("");
+          sugUser.querySelectorAll("button[data-usar]").forEach(b => {
+            b.onclick = () => {
+              inputUser.value = b.dataset.usar;
+              inputUser.dispatchEvent(new Event("input"));
+            };
+          });
+        } else {
+          sugUser.innerHTML = "";
+        }
+      }
+    } catch (e) {
+      estadoUser.textContent = "";
+      estadoUser.className = "user-estado";
+      sugUser.innerHTML = "";
+    }
+  }, 450);
+});
+
+/* ---------- Login / Registro ---------- */
+$("#bLogin").onclick = async () => {
+  try {
+    const r = await jsonPost("/auth/login", { correo: $("#lCorreo").value, contrasena: $("#lPass").value });
+    localStorage.setItem("dibujar_token", r.token); await entrar();
+  } catch (e) { toast(e.message); }
+};
+
+$("#bReg").onclick = async () => {
+  if (!userValido) return toast("Elige un @usuario disponible");
+  try {
+    const r = await jsonPost("/auth/registro", {
+      nombre: $("#rNombre").value, apellido: $("#rApellido").value,
+      username: $("#rUser").value,
+      correo: $("#rCorreo").value, contrasena: $("#rPass").value,
+      pais: $("#rPais").value, fecha_nacimiento: $("#rFecha").value,
+      id_frecuencia: $("#rFrec").value ? +$("#rFrec").value : null,
+      estilos: elegidos($("#rEstilos")), tematicas: elegidos($("#rTemas"))
+    });
+    localStorage.setItem("dibujar_token", r.token); await entrar();
+  } catch (e) { toast(e.message); }
+};
+
+function salir() {
+  localStorage.removeItem("dibujar_token"); yo = null;
+  $("#app").hidden = true; $("#auth").hidden = false;
+  $("#modales").innerHTML = "";
+  A("#auth", { opacity: [0, 1], translateY: [30, 0], duration: 600 });
+}
+
+async function entrar() {
+  yo = await api("/usuarios/yo");
+  $("#auth").hidden = true; $("#app").hidden = false;
+  irA("inicio");
+}
+
+/* ---------- Navegación ---------- */
+const SECCIONES = [["inicio", "🏠 Inicio"], ["explorar", "🧭 Explorar"], ["dibujar", "🎨 Dibujar", 1],
+                   ["buscar", "🔍 Buscar", 1], ["mensajes", "💬 Mensajes", 1], ["perfil", "👤 Perfil"]];
+
+function irA(v, arg) {
+  vistaActual = v;
+  $("#nav").innerHTML = SECCIONES.map(([id, t, pronto]) =>
+    `<button data-v="${id}" class="${id === v ? "on" : ""} ${pronto ? "pronto" : ""}">${t}</button>`).join("");
+  ({
+    inicio: vInicio, explorar: vExplorar, publicar: vPublicar,
+    perfil: () => vPerfil(arg), user: () => vPerfilAjeno(arg)
+  }[v] || vProximamente)(v);
+  M($("#vista"), { opacity: [0, 1] }, { duration: 0.3 });
+}
+$("#nav").onclick = e => { if (e.target.dataset.v) irA(e.target.dataset.v); };
+
+function vProximamente(v) {
+  $("#vista").innerHTML = `<div class="vacio"><h2>Próximamente</h2><p>La sección "${esc(v)}" se construye en la siguiente entrega.</p></div>`;
+}
+
+/* ---------- Publicaciones ---------- */
+function htmlPost(p) {
+  const media = p.tipo === "video"
+    ? `<video controls src="/${esc(p.archivo)}"></video>` : `<img src="/${esc(p.archivo)}" alt="Publicación">`;
+  const tags = p.hashtags.map(h => "#" + esc(h)).join(" ");
+  const u = p.username ? "@" + esc(p.username) : "";
+  return `<article class="post" data-id="${p.id_publicacion}">
+    <header><div><b class="ir-perfil" data-user="${esc(p.username || "")}">${esc(p.autor)}</b> <small style="color:var(--sub)">${u}</small><br><small>${esc(p.fecha_publicacion.slice(0, 10))}</small></div>
+      ${p.id_usuario === yo.id_usuario ? '<button data-a="borrar">🗑</button>' : ""}</header>
+    ${media}
+    <div class="acc"><button data-a="like" class="${p.yo_di_like ? "on" : ""}">♥ <span>${p.likes}</span></button>
+      <button data-a="coms">💬 <span>${p.comentarios}</span></button></div>
+    <p class="desc">${esc(p.descripcion || "")} <span class="tags">${tags}</span></p>
+    <div class="coms" hidden></div></article>`;
+}
+
+async function cargarFeed(modo, contenedor, vacio) {
+  try {
+    const pubs = await api("/publicaciones?modo=" + modo + "&limite=30");
+    contenedor.innerHTML = pubs.length ? pubs.map(htmlPost).join("") : `<div class="vacio">${vacio}</div>`;
+    A(contenedor.querySelectorAll(".post"), { opacity: [0, 1], translateY: [30, 0], delay: stagger(90), duration: 600 });
+  } catch (e) { toast(e.message); }
+}
+
+function vInicio() {
+  $("#vista").innerHTML = `<div class="row" style="justify-content:space-between;align-items:center">
+    <h2>Inicio</h2><button class="btn" id="bNueva">+ Publicar</button></div><div id="feed"></div>`;
+  $("#bNueva").onclick = () => irA("publicar");
+  cargarFeed("inicio", $("#feed"), "Aún no hay publicaciones aquí.<br>Publica la primera con el botón de arriba.");
+}
+
+function vExplorar() {
+  $("#vista").innerHTML = '<div id="explorar"></div>';
+  cargarFeed("explorar", $("#explorar"), "Todavía no hay publicaciones para explorar.");
+}
+
+function vPublicar() {
+  $("#vista").innerHTML = `<h2>Nueva publicación</h2>
+    <label>Imagen o video</label><input type="file" id="pArchivo" accept="image/*,video/*">
+    <textarea id="pDesc" rows="3" placeholder="Descripción"></textarea>
+    <input id="pTags" placeholder="Hashtags: #anime #pixelart">
+    <div class="row"><button class="btn" id="bPub">Publicar</button><button id="bCancel">Cancelar</button></div>`;
+  $("#bCancel").onclick = () => irA("inicio");
+  $("#bPub").onclick = async () => {
+    const f = $("#pArchivo").files[0];
+    if (!f) return toast("Elige una imagen o video");
+    const fd = new FormData();
+    fd.append("archivo", f); fd.append("descripcion", $("#pDesc").value); fd.append("hashtags", $("#pTags").value);
+    try { await api("/publicaciones", { method: "POST", body: fd }); irA("inicio"); }
+    catch (e) { toast(e.message); }
+  };
+}
+
+/* ---------- PERFIL ---------- */
+const AVATARES = ["🐱","🎨","🦊","🐼","👾","🦄","🌸","⭐"];
+const COLORES_AV = ["#ff5ca8","#7c5cff","#3ac97a","#ffb45c","#5cc8ff","#ff6b8a","#c65cff","#5cffc8"];
+
+function fotoHTML(u) {
+  if (u.foto_perfil) return `<img src="/${esc(u.foto_perfil)}" alt="">`;
+  const i = (u.id_usuario || 0) % AVATARES.length;
+  return `<span style="background:${COLORES_AV[i]}">${AVATARES[i]}</span>`;
+}
+
+function calcularEdad(fecha) {
+  if (!fecha) return null;
+  const h = new Date(), n = new Date(fecha);
+  let e = h.getFullYear() - n.getFullYear();
+  const m = h.getMonth() - n.getMonth();
+  if (m < 0 || (m === 0 && h.getDate() < n.getDate())) e--;
+  return e;
+}
+
+async function vPerfil(arg) {
+  const id = arg?.id || yo.id_usuario;
+  const esPropio = id === yo.id_usuario;
+  let perfil;
+  try {
+    perfil = esPropio ? await api("/usuarios/yo") : await api("/usuarios/" + id);
+  } catch (e) { toast(e.message); return irA("inicio"); }
+
+  const edad = calcularEdad(perfil.fecha_nacimiento);
+  const bio = perfil.bio ? esc(perfil.bio) : '<span class="vacia">Sin biografía todavía</span>';
+  const chipsEst = perfil.estilos.length
+    ? perfil.estilos.map(e => `<span class="perfil-chip">${esc(e.nombre)}</span>`).join("")
+    : '<span class="perfil-chip vacio">Ninguno</span>';
+  const chipsTem = perfil.tematicas.length
+    ? perfil.tematicas.map(t => `<span class="perfil-chip">${esc(t.nombre)}</span>`).join("")
+    : '<span class="perfil-chip vacio">Ninguna</span>';
+
+  $("#vista").innerHTML = `
+    <div class="perfil">
+      <div class="perfil-top">
+        <div class="perfil-foto" id="perfilFoto">${fotoHTML(perfil)}</div>
+        <div class="perfil-info">
+          <h2 class="perfil-nombre">${esc(perfil.nombre)} ${esc(perfil.apellido)}</h2>
+          <div class="perfil-user">@${esc(perfil.username)}</div>
+          <div class="perfil-acciones">
+            ${esPropio
+              ? `<button class="btn" id="bEditar">Editar perfil</button>
+                 <button id="bCompartir">Compartir</button>
+                 <button id="bSalir" class="btn-danger">Cerrar sesión</button>`
+              : `<button class="btn" id="bSeguir" disabled style="opacity:.6">+ Amigo (próximamente)</button>`}
+          </div>
+        </div>
+      </div>
+
+      <div class="perfil-stats">
+        <div class="perfil-stat"><b id="statPubs">${perfil.total_publicaciones}</b><span>publicaciones</span></div>
+        <div class="perfil-stat"><b>${perfil.total_amigos}</b><span>amigos</span></div>
+        <div class="perfil-stat"><b>${perfil.estilos.length}</b><span>estilos</span></div>
+      </div>
+
+      <div class="perfil-bio">${bio}</div>
+      <div class="perfil-meta">
+        ${perfil.pais ? `<span>🌎 ${esc(perfil.pais)}</span>` : ""}
+        ${edad !== null ? `<span>🎂 ${edad} años</span>` : ""}
+        ${perfil.frecuencia ? `<span>🖌️ ${esc(perfil.frecuencia)}</span>` : ""}
+        ${esPropio && perfil.correo ? `<span>📧 ${esc(perfil.correo)}</span>` : ""}
+      </div>
+
+      <div class="perfil-grupo"><h4>Estilos favoritos</h4><div class="perfil-chips">${chipsEst}</div></div>
+      <div class="perfil-grupo"><h4>Temáticas favoritas</h4><div class="perfil-chips">${chipsTem}</div></div>
+
+      <div class="perfil-tabs">
+        <button data-tab="pubs" class="on"><span class="em">📸</span>Publicaciones</button>
+        <button data-tab="likes"><span class="em">❤️</span>Me gusta</button>
+      </div>
+
+      <div id="perfilGrid" class="perfil-grid"></div>
+    </div>`;
+
+  // Animación de entrada
+  A(".perfil-foto", { opacity: [0, 1], scale: [.8, 1], duration: 500 });
+  A(".perfil-nombre, .perfil-user, .perfil-acciones", { opacity: [0, 1], translateX: [-20, 0], delay: stagger(80), duration: 500 });
+  A(".perfil-stats", { opacity: [0, 1], translateY: [15, 0], delay: 250, duration: 500 });
+  A(".perfil-bio, .perfil-meta", { opacity: [0, 1], delay: stagger(80, { start: 400 }), duration: 500 });
+
+  // Cargar grid
+  await cargarGridPerfil(id, "pubs");
+
+  // Eventos
+  $$(".perfil-tabs button").forEach(b => b.onclick = () => {
+    $$(".perfil-tabs button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    cargarGridPerfil(id, b.dataset.tab);
+  });
+  $("#perfilFoto").onclick = () => { if (esPropio) abrirModalFoto(); };
+  if (esPropio) {
+    $("#bEditar").onclick = () => abrirModalEditar(perfil);
+    $("#bCompartir").onclick = () => abrirModalCompartir(perfil);
+    $("#bSalir").onclick = () => {
+      if (confirm("¿Cerrar sesión?")) salir();
+    };
+  }
+}
+
+async function vPerfilAjeno(username) {
+  if (!username) return irA("inicio");
+  try {
+    const perfil = await api("/usuarios/u/" + encodeURIComponent(username));
+    await vPerfil({ id: perfil.id_usuario });
+  } catch (e) { toast(e.message); irA("inicio"); }
+}
+
+async function cargarGridPerfil(id, tab) {
+  const grid = $("#perfilGrid");
+  grid.innerHTML = '<div class="vacio-grid">Cargando...</div>';
+  try {
+    const pubs = tab === "pubs"
+      ? await api("/usuarios/" + id + "/publicaciones")
+      : await api("/usuarios/yo/likes");
+    if (!pubs.length) {
+      grid.innerHTML = `<div class="vacio-grid">${tab === "pubs" ? "Aún no hay publicaciones" : "Aún no has dado like a nada"}</div>`;
+      return;
+    }
+    grid.innerHTML = pubs.map(p => `
+      <div class="cell" data-id="${p.id_publicacion}">
+        ${p.tipo === "video"
+          ? `<video muted src="/${esc(p.archivo)}"></video>`
+          : `<img src="/${esc(p.archivo)}" alt="">`}
+        <div class="ov"><span>♥ <b>${p.likes}</b></span><span>💬 <b>${p.comentarios}</b></span></div>
+      </div>`).join("");
+    A(grid.querySelectorAll(".cell"), { opacity: [0, 1], scale: [.85, 1], delay: stagger(35), duration: 400 });
+    grid.querySelectorAll(".cell").forEach(c => c.onclick = () => verPublicacion(c.dataset.id));
+  } catch (e) {
+    grid.innerHTML = `<div class="vacio-grid">${esc(e.message)}</div>`;
+  }
+}
+
+/* ---------- Ver publicación individual ---------- */
+async function verPublicacion(id) {
+  try {
+    const p = await api("/publicaciones/" + id);
+    $("#modales").innerHTML = `
+      <div class="modal-bg" id="modalBg"><div class="modal">
+        <h3>Publicación <button id="cerrarX">✕</button></h3>
+        ${htmlPost(p)}
+      </div></div>`;
+    const bg = $("#modalBg");
+    M(bg.querySelector(".modal"), { y: [60, 0], opacity: [0, 1] }, { duration: 0.35 });
+    bg.onclick = e => { if (e.target === bg) cerrarModal(); };
+    $("#cerrarX").onclick = cerrarModal;
+  } catch (e) { toast(e.message); }
+}
+
+function cerrarModal() {
+  const bg = $("#modalBg");
+  if (!bg) return;
+  M(bg.querySelector(".modal"), { y: [0, 80], opacity: [1, 0] }, { duration: 0.25 }).finished.then(() => {
+    $("#modales").innerHTML = "";
+  });
+}
+
+/* ---------- Modal editar perfil ---------- */
+async function abrirModalEditar(perfil) {
+  const [frecs, estilos, temas] = await Promise.all([api("/frecuencias"), api("/estilos"), api("/tematicas")]);
+  const estSel = new Set(perfil.estilos.map(e => e.id_estilo));
+  const temSel = new Set(perfil.tematicas.map(t => t.id_tematica));
+
+  $("#modales").innerHTML = `
+    <div class="modal-bg" id="modalBg"><div class="modal">
+      <h3>Editar perfil <button id="cerrarX">✕</button></h3>
+
+      <div class="avatar-grande" id="editFoto">${fotoHTML(perfil)}</div>
+      <button type="button" id="bCambiarFoto" style="width:100%;margin-bottom:.5rem">Cambiar foto de perfil</button>
+
+      <label>Nombre</label>
+      <input id="eNombre" value="${esc(perfil.nombre)}">
+      <label>Apellido</label>
+      <input id="eApellido" value="${esc(perfil.apellido)}">
+
+      <label>@usuario</label>
+      <div class="user-wrap">
+        <span class="prefix">@</span>
+        <input id="eUser" value="${esc(perfil.username)}" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="eUserEstado" class="user-estado"></div>
+      <div id="eUserSug" class="sugerencias"></div>
+
+      <label>Biografía</label>
+      <textarea id="eBio" maxlength="150" placeholder="Cuéntanos algo sobre ti">${esc(perfil.bio || "")}</textarea>
+      <div class="contador"><span id="bioLen">${(perfil.bio || "").length}</span>/150</div>
+
+      <label>Frecuencia de dibujo</label>
+      <select id="eFrec">
+        <option value="">Sin definir</option>
+        ${frecs.map(f => `<option value="${f.id_frecuencia}" ${perfil.id_frecuencia === f.id_frecuencia ? "selected" : ""}>${esc(f.nombre)}</option>`).join("")}
+      </select>
+
+      <label>Estilos favoritos</label>
+      <div class="chips" id="eEstilos">
+        ${estilos.map(e => `<button type="button" data-id="${e.id_estilo}" class="${estSel.has(e.id_estilo) ? "on" : ""}">${esc(e.nombre)}</button>`).join("")}
+      </div>
+
+      <label>Temáticas favoritas</label>
+      <div class="chips" id="eTemas">
+        ${temas.map(t => `<button type="button" data-id="${t.id_tematica}" class="${temSel.has(t.id_tematica) ? "on" : ""}">${esc(t.nombre)}</button>`).join("")}
+      </div>
+
+      <div class="modal-acciones">
+        <button id="cancelarEdit">Cancelar</button>
+        <button class="btn" id="guardarEdit">Guardar</button>
+      </div>
+    </div></div>`;
+
+  const bg = $("#modalBg");
+  M(bg.querySelector(".modal"), { y: [80, 0], opacity: [0, 1] }, { duration: 0.35 });
+  bg.onclick = e => { if (e.target === bg) cerrarModal(); };
+  $("#cerrarX").onclick = cerrarModal;
+  $("#cancelarEdit").onclick = cerrarModal;
+  $("#bCambiarFoto").onclick = () => abrirModalFoto();
+
+  const bioInp = $("#eBio");
+  bioInp.oninput = () => { $("#bioLen").textContent = bioInp.value.length; };
+
+  $("#eEstilos").onclick = e => { if (e.target.dataset.id) e.target.classList.toggle("on"); };
+  $("#eTemas").onclick = e => { if (e.target.dataset.id) e.target.classList.toggle("on"); };
+
+  const eUser = $("#eUser");
+  const eEstado = $("#eUserEstado");
+  const eSug = $("#eUserSug");
+  let userEditValido = true;
+  let debUserEdit = null;
+
+  eUser.addEventListener("input", () => {
+    let v = limpiarUsuario(eUser.value);
+    if (eUser.value !== v) eUser.value = v;
+    clearTimeout(debUserEdit);
+    if (v === perfil.username) {
+      eEstado.textContent = ""; eEstado.className = "user-estado";
+      eSug.innerHTML = ""; userEditValido = true; return;
+    }
+    if (v.length < 3) {
+      eEstado.textContent = "⚠️ Mínimo 3 caracteres"; eEstado.className = "user-estado warn";
+      eSug.innerHTML = ""; userEditValido = false; return;
+    }
+    eEstado.textContent = "⏳ Verificando..."; eEstado.className = "user-estado";
+    debUserEdit = setTimeout(async () => {
+      try {
+        const r = await api("/usuarios/disponible/" + encodeURIComponent(v));
+        if (r.disponible) {
+          eEstado.textContent = "✅ Disponible"; eEstado.className = "user-estado ok";
+          eSug.innerHTML = ""; userEditValido = true;
+        } else {
+          eEstado.textContent = "❌ " + (r.error || "No disponible"); eEstado.className = "user-estado err";
+          userEditValido = false;
+          if (r.sugerencias && r.sugerencias.length) {
+            eSug.innerHTML = "<div style='font-size:.78rem;color:var(--sub);margin-bottom:.3rem'>Prueba con:</div>" +
+              r.sugerencias.map(s => `<div class="sugerencia"><span>@${esc(s)}</span><button type="button" data-usar="${esc(s)}">Usar</button></div>`).join("");
+            eSug.querySelectorAll("button[data-usar]").forEach(b => {
+              b.onclick = () => { eUser.value = b.dataset.usar; eUser.dispatchEvent(new Event("input")); };
+            });
+          } else { eSug.innerHTML = ""; }
+        }
+      } catch (err) { eEstado.textContent = ""; eSug.innerHTML = ""; userEditValido = false; }
+    }, 450);
+  });
+
+  $("#guardarEdit").onclick = async () => {
+    if (!userEditValido) return toast("Elige un @usuario disponible");
+    const body = {
+      nombre: $("#eNombre").value,
+      apellido: $("#eApellido").value,
+      username: $("#eUser").value,
+      bio: $("#eBio").value,
+      id_frecuencia: $("#eFrec").value ? +$("#eFrec").value : null,
+      estilos: elegidos($("#eEstilos")),
+      tematicas: elegidos($("#eTemas"))
+    };
+    try {
+      yo = await jsonPost("/usuarios/yo", body, "PUT");
+      toast("Perfil actualizado ✅", true);
+      cerrarModal();
+      setTimeout(() => vPerfil(), 300);
+    } catch (e) { toast(e.message); }
+  };
+}
+
+/* ---------- Modal cambio de foto ---------- */
+function abrirModalFoto() {
+  $("#modales").innerHTML = `
+    <div class="modal-bg" id="modalBg"><div class="modal">
+      <h3>Cambiar foto de perfil <button id="cerrarX">✕</button></h3>
+
+      <label>📤 Subir desde tu computadora</label>
+      <input type="file" id="fotoArchivo" accept="image/*">
+
+      <label style="margin-top:1rem">🖼️ O elige un avatar</label>
+      <div class="avatar-grid" id="avatarGrid">
+        ${AVATARES.map((e, i) => `<button type="button" data-i="${i}" style="background:${COLORES_AV[i]}33">${e}</button>`).join("")}
+      </div>
+
+      <div class="modal-acciones">
+        <button id="cancelarFoto">Cancelar</button>
+      </div>
+    </div></div>`;
+
+  const bg = $("#modalBg");
+  M(bg.querySelector(".modal"), { y: [80, 0], opacity: [0, 1] }, { duration: 0.35 });
+  bg.onclick = e => { if (e.target === bg) cerrarModal(); };
+  $("#cerrarX").onclick = cerrarModal;
+  $("#cancelarFoto").onclick = cerrarModal;
+
+  $("#fotoArchivo").onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const fd = new FormData();
+    fd.append("archivo", f);
+    try {
+      const r = await api("/usuarios/yo/foto", { method: "POST", body: fd });
+      yo.foto_perfil = r.foto_perfil;
+      toast("Foto actualizada ✅", true);
+      cerrarModal();
+      setTimeout(() => vPerfil(), 300);
+    } catch (err) { toast(err.message); }
+  };
+
+  $("#avatarGrid").onclick = async (e) => {
+    const b = e.target.closest("button[data-i]");
+    if (!b) return;
+    toast("Próximamente: avatares prediseñados");
+  };
+}
+
+/* ---------- Modal compartir ---------- */
+function abrirModalCompartir(perfil) {
+  $("#modales").innerHTML = `
+    <div class="modal-bg" id="modalBg"><div class="modal">
+      <h3>Compartir tu perfil <button id="cerrarX">✕</button></h3>
+      <p style="color:var(--sub);font-size:.9rem;margin:.3rem 0 1rem">Envía tu @usuario a quien quieras para que te encuentren en DibujAR.</p>
+      <div style="background:#241b48;padding:1rem;border-radius:12px;text-align:center;font-size:1.4rem;font-weight:700;margin-bottom:1rem">
+        @${esc(perfil.username)}
+      </div>
+      <div class="modal-acciones">
+        <button id="cancelarComp">Cerrar</button>
+        <button class="btn" id="copiarUser">Copiar @usuario</button>
+      </div>
+    </div></div>`;
+
+  const bg = $("#modalBg");
+  M(bg.querySelector(".modal"), { y: [80, 0], opacity: [0, 1] }, { duration: 0.35 });
+  bg.onclick = e => { if (e.target === bg) cerrarModal(); };
+  $("#cerrarX").onclick = cerrarModal;
+  $("#cancelarComp").onclick = cerrarModal;
+  $("#copiarUser").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText("@" + perfil.username);
+      toast("Copiado: @" + perfil.username, true);
+      cerrarModal();
+    } catch (e) { toast("No se pudo copiar"); }
+  };
+}
+
+/* ---------- Acciones sobre una publicación ---------- */
+document.addEventListener("click", async e => {
+  if (e.target.classList && e.target.classList.contains("ir-perfil")) {
+    const un = e.target.dataset.user;
+    if (un && yo && un !== yo.username) irA("user", un);
+    else if (un && yo && un === yo.username) irA("perfil");
+    return;
+  }
+
+  const b = e.target.closest("button[data-a]");
+  if (!b) return;
+  const post = b.closest(".post");
+  const id = post.dataset.id;
+  try {
+    if (b.dataset.a === "like") {
+      const r = await api(`/publicaciones/${id}/like`, { method: b.classList.contains("on") ? "DELETE" : "POST" });
+      b.classList.toggle("on"); b.querySelector("span").textContent = r.likes;
+      M(b, { scale: [1, 1.4, 1] }, { duration: 0.35 });
+    } else if (b.dataset.a === "coms") {
+      const c = $(".coms", post); c.hidden = !c.hidden;
+      if (!c.hidden) await cargarComentarios(post);
+    } else if (b.dataset.a === "borrar") {
+      if (!confirm("¿Eliminar esta publicación?")) return;
+      await api(`/publicaciones/${id}`, { method: "DELETE" });
+      await M(post, { opacity: 0, scale: 0.9 }, { duration: 0.3 }).finished; post.remove();
+    } else if (b.dataset.a === "enviar-com") {
+      const inp = $(".coms input", post);
+      await jsonPost(`/publicaciones/${id}/comentarios`, { contenido: inp.value });
+      await cargarComentarios(post);
+    } else if (b.dataset.a === "borrar-com") {
+      await api(`/comentarios/${b.dataset.id}`, { method: "DELETE" }); await cargarComentarios(post);
+    }
+  } catch (err) { toast(err.message); }
+});
+
+async function cargarComentarios(post) {
+  const lista = await api(`/publicaciones/${post.dataset.id}/comentarios`);
+  $(".coms", post).innerHTML = lista.map(c => `<div class="com"><b>${esc(c.autor)}</b> ${esc(c.contenido)}
+      ${c.id_usuario === yo.id_usuario ? `<button data-a="borrar-com" data-id="${c.id_comentario}">✕</button>` : ""}</div>`).join("") +
+    `<div class="row"><input placeholder="Escribe un comentario"><button data-a="enviar-com" class="btn">Enviar</button></div>`;
+  $("[data-a='coms'] span", post).textContent = lista.length;
+}
+
+/* ---------- Arranque ---------- */
+(async () => {
+  A("#auth", { opacity: [0, 1], translateY: [30, 0], duration: 700 });
+  try { await cargarCatalogos(); } catch (e) { toast("No se pudo conectar con el servidor"); }
+  if (localStorage.getItem("dibujar_token")) { try { await entrar(); } catch (e) { salir(); } }
+})();
+</script>
+</body>
+</html>

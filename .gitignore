@@ -1,0 +1,21 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Base de datos local (se genera con database/crear_bd.py)
+*.db
+
+# Archivos subidos por los usuarios (se conserva la carpeta, no su contenido)
+uploads/*
+!uploads/.gitkeep
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.env
